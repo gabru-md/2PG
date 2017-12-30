@@ -31,6 +31,10 @@ var GameView = {
 		this.shootingVelocity = 600;
 		this.studentShootTime = 0;
 		this.teacherShootTime = 0;
+		this.assignmentsUsed = 0;
+		this.homeworksUsed = 0;
+		this.limit = 10;
+
 		// Setting Bounds to the world
 		this.game.physics.setBoundsToWorld();
 
@@ -64,6 +68,12 @@ var GameView = {
 		this.teacher.scale.setTo(0.15);
 		this.student.anchor.setTo(0.5,1);
 		this.teacher.anchor.setTo(0.5,1);
+		
+		// Last Minute Addons
+		this.student.checkWorldBounds = true;
+		this.teacher.checkWorldBounds = true;
+		this.student.events.onOutOfBounds.add(this.killStudent,this);
+		this.teacher.events.onOutOfBounds.add(this.killTeacher,this);
 
 		// Setting up Physics for Bodies
 		this.game.physics.arcade.enable(this.student);
@@ -102,6 +112,10 @@ var GameView = {
 		this.homeworks.setAll('checkWorldBounds', true);
 
 		this.shootKeyStudent = this.game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
+
+		// Last Moment Changes
+		this.homeworkToShoot = this.homeworks.getFirstExists(false);
+		this.assignmentToShoot = this.assignments.getFirstExists(false);
 
 	},
 	update: function(){
@@ -153,6 +167,21 @@ var GameView = {
 		if(this.shootKeyStudent.isDown){
 			this.shootStudent();
 		}
+
+		// Winning Side
+		// Damaging oponent
+		this.game.physics.arcade.overlap(this.assignmentToShoot, this.student, this.damageStudent, null, this);
+		this.game.physics.arcade.overlap(this.homeworkToShoot, this.teacher, this.damageTeacher, null, this);
+
+		// Checking using homeworks/assignments used
+		if(!this.student.health){
+			alert('Teacher Wins');
+			this.game.state.start('WinsLevel');
+		}
+		if(!this.teacher.health){
+			alert('Student Wins');
+			this.game.state.start('WinsLevel');
+		}
 	},
 	resizeEarth: function(member){
 		// function for setting individual scale
@@ -163,13 +192,16 @@ var GameView = {
 		if(game.time.now > this.teacherShootTime){
 			this.assignmentToShoot = this.assignments.getFirstExists(false);
 
-			if(this.assignmentToShoot){
+			if(this.assignmentToShoot && this.assignmentsUsed != this.limit){
 				this.assignmentToShoot.reset(this.teacher.x, this.teacher.y);
 				this.assignmentToShoot.body.velocity.x = -this.shootingVelocity;
 				this.assignmentToShoot.scale.setTo(0.05);
 				this.assignmentToShoot.anchor.setTo(0.5,1);
 				this.assignmentToShoot.body.allowGravity = false;
 				this.teacherShootTime = this.game.time.now + 1000;
+
+				// Increment Assignments Used by 1
+				this.assignmentsUsed += 1;
 			}
 		}
 	},
@@ -177,17 +209,49 @@ var GameView = {
 		if(game.time.now > this.studentShootTime){
 			this.homeworkToShoot = this.homeworks.getFirstExists(false);
 
-			if(this.homeworkToShoot){
+			if(this.homeworkToShoot && this.homeworksUsed != this.limit){
 				this.homeworkToShoot.reset(this.student.x, this.student.y);
 				this.homeworkToShoot.body.velocity.x = this.shootingVelocity;
 				this.homeworkToShoot.scale.setTo(0.05);
 				this.homeworkToShoot.anchor.setTo(0.5,1);
 				this.homeworkToShoot.body.allowGravity = false;
 				this.studentShootTime = this.game.time.now + 1000;
+
+				// Increment Homeworks Used by 1
+				this.homeworksUsed += 1;
 			}
 		}
+	},
+	damageStudent: function(){
+		this.student.health -= 1;
+		this.assignmentToShoot.kill();
+	},
+	damageTeacher: function(){
+		this.teacher.health -= 1;
+		this.homeworkToShoot.kill();
+	},
+	killStudent: function(){
+		this.student.health = 0;
+	},
+	killTeacher: function(){
+		this.teacher.health = 0;
 	}
 };
 
+var WinsLevel = {
+	preload: function(){
+		this.load.image('gameover', 'new-assets/sprites/extras/gameover.png');
+	},
+	create: function(){
+		this.background = this.game.add.sprite(0, 0, 'gameover');
+		this.background.height = this.game.height;
+		this.background.width = this.game.width;
+	},
+	update: function(){
+
+	}
+}
+
 game.state.add('GameView', GameView);
+game.state.add('WinsLevel', WinsLevel);
 game.state.start('GameView');
