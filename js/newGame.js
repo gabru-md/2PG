@@ -10,13 +10,15 @@ var GameView = {
 		this.scale.pageAlignHorizontally = true;
 
 		this.game.physics.startSystem(Phaser.Physics.ARCADE);
-		this.game.physics.arcade.gravity.y = 1000;
+		this.game.physics.arcade.gravity.y = 1250;
 	},
 	preload: function(){
 		this.load.image('background', 'new-assets/sprites/background/background.png');
 		this.load.image('earth', 'new-assets/sprites/extras/earth.png');
 		this.load.image('teacher', 'new-assets/sprites/players/teacher.png');
 		this.load.image('student', 'new-assets/sprites/players/student.png');
+		this.load.image('assignment', 'new-assets/sprites/extras/assignment.png');
+		this.load.image('homework', 'new-assets/sprites/extras/homework.png');
 	},
 	create: function(){
 		// Setting up variables
@@ -24,9 +26,11 @@ var GameView = {
 		this.jumpButtonStudent;
 		this.jumpTimerTeacher = 0;
 		this.jumpTimerStudent = 0;
-		this.jumpSpeed = 600;
-		this.movementSpeed = 200;
-
+		this.jumpSpeed = 650;
+		this.movementSpeed = 300;
+		this.shootingVelocity = 600;
+		this.studentShootTime = 0;
+		this.teacherShootTime = 0;
 		// Setting Bounds to the world
 		this.game.physics.setBoundsToWorld();
 
@@ -78,9 +82,20 @@ var GameView = {
 		this.leftKey = this.game.input.keyboard.addKey(Phaser.Keyboard.A);
 		this.rightKey = this.game.input.keyboard.addKey(Phaser.Keyboard.D);
 
-		// Shooting Key for Teacher and Student
-		//this.shootKeyStudent
-		//this.shootKeyTeacher
+		// Creating Bullets for Teacher and Student
+		// For Teacher
+		this.assignments = this.game.add.group();
+		this.assignments.enableBody = true;
+		this.assignments.physicsBodyType = Phaser.Physics.ARCADE;
+		this.assignments.createMultiple(10, 'assignment');
+		this.assignments.setAll('outOfBoundsKill', true);
+		this.assignments.setAll('checkWorldBounds', true);
+
+		this.shootKeyTeacher = this.game.input.keyboard.addKey(Phaser.Keyboard.CONTROL);
+
+		// For Student
+		
+
 	},
 	update: function(){
 		// Adding Collisions
@@ -88,8 +103,12 @@ var GameView = {
 		this.game.physics.arcade.collide(this.earthGroup, this.teacher);
 		this.game.physics.arcade.collide(this.student, this.teacher);
 		
+		// Setting Vel to 0
 		this.student.body.velocity.x = 0;
 		this.teacher.body.velocity.x = 0;
+
+		// Check for Wins
+
 
 		// Setting up Key Presses
 		// Handling Jump Events
@@ -119,11 +138,30 @@ var GameView = {
 		if(this.cursors.right.isDown){
 			this.teacher.body.velocity.x = this.movementSpeed;
 		}
+
+		// Handling Shooting for Student
+		if(this.shootKeyTeacher.isDown){
+			this.shootTeacher();
+		}
 	},
 	resizeEarth: function(member){
 		// function for setting individual scale
 		member.scale.set(0.05);
 		member.anchor.setTo(0.5);
+	},
+	shootTeacher: function(){
+		if(game.time.now > this.studentShootTime){
+			this.assignmentToShoot = this.assignments.getFirstExists(false);
+
+			if(this.assignmentToShoot){
+				this.assignmentToShoot.reset(this.teacher.x, this.teacher.y);
+				this.assignmentToShoot.body.velocity.x = -this.shootingVelocity;
+				this.assignmentToShoot.scale.setTo(0.05);
+				this.assignmentToShoot.anchor.setTo(0.5,1);
+				this.assignmentToShoot.body.allowGravity = false;
+				this.studentShootTime = this.game.time.now + 1000;
+			}
+		}
 	}
 };
 
