@@ -94,7 +94,14 @@ var GameView = {
 		this.shootKeyTeacher = this.game.input.keyboard.addKey(Phaser.Keyboard.CONTROL);
 
 		// For Student
-		
+		this.homeworks = this.game.add.group();
+		this.homeworks.enableBody = true;
+		this.homeworks.physicsBodyType = Phaser.Physics.ARCADE;
+		this.homeworks.createMultiple(10, 'homework');
+		this.homeworks.setAll('outOfBoundsKill', true);
+		this.homeworks.setAll('checkWorldBounds', true);
+
+		this.shootKeyStudent = this.game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
 
 	},
 	update: function(){
@@ -143,6 +150,9 @@ var GameView = {
 		if(this.shootKeyTeacher.isDown){
 			this.shootTeacher();
 		}
+		if(this.shootKeyStudent.isDown){
+			this.shootStudent();
+		}
 	},
 	resizeEarth: function(member){
 		// function for setting individual scale
@@ -150,7 +160,7 @@ var GameView = {
 		member.anchor.setTo(0.5);
 	},
 	shootTeacher: function(){
-		if(game.time.now > this.studentShootTime){
+		if(game.time.now > this.teacherShootTime){
 			this.assignmentToShoot = this.assignments.getFirstExists(false);
 
 			if(this.assignmentToShoot){
@@ -159,6 +169,20 @@ var GameView = {
 				this.assignmentToShoot.scale.setTo(0.05);
 				this.assignmentToShoot.anchor.setTo(0.5,1);
 				this.assignmentToShoot.body.allowGravity = false;
+				this.teacherShootTime = this.game.time.now + 1000;
+			}
+		}
+	},
+	shootStudent: function(){
+		if(game.time.now > this.studentShootTime){
+			this.homeworkToShoot = this.homeworks.getFirstExists(false);
+
+			if(this.homeworkToShoot){
+				this.homeworkToShoot.reset(this.student.x, this.student.y);
+				this.homeworkToShoot.body.velocity.x = this.shootingVelocity;
+				this.homeworkToShoot.scale.setTo(0.05);
+				this.homeworkToShoot.anchor.setTo(0.5,1);
+				this.homeworkToShoot.body.allowGravity = false;
 				this.studentShootTime = this.game.time.now + 1000;
 			}
 		}
