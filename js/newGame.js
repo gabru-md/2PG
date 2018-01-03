@@ -34,6 +34,8 @@ var GameView = {
 		this.assignmentsUsed = 0;
 		this.homeworksUsed = 0;
 		this.limit = 10;
+		this.isTeacherLeft = true;
+		this.isStudentRight = true;
 
 		// Setting Bounds to the world
 		this.game.physics.setBoundsToWorld();
@@ -117,6 +119,8 @@ var GameView = {
 		this.homeworkToShoot = this.homeworks.getFirstExists(false);
 		this.assignmentToShoot = this.assignments.getFirstExists(false);
 
+		this.student.scale.x = -0.1;
+
 	},
 	update: function(){
 		// Adding Collisions
@@ -146,17 +150,33 @@ var GameView = {
 
 		// Handling Student's Movements
 		if(this.leftKey.isDown){
+			if(this.isStudentRight === true){
+				this.student.scale.x = -(this.student.scale.x);
+				this.isStudentRight = false;
+			}
 			this.student.body.velocity.x = -this.movementSpeed;
 		}
 		if(this.rightKey.isDown){
+			if(this.isStudentRight === false){
+				this.student.scale.x = -(this.student.scale.x);
+				this.isStudentRight = true;
+			}
 			this.student.body.velocity.x = this.movementSpeed;
 		}
 
 		// Handling Teacher's Movement
 		if(this.cursors.left.isDown){
+			if(this.isTeacherLeft === false){
+				this.teacher.scale.x = -(this.teacher.scale.x);
+				this.isTeacherLeft = true;
+			}
 			this.teacher.body.velocity.x = -this.movementSpeed;
 		}
 		if(this.cursors.right.isDown){
+			if(this.isTeacherLeft === true){
+				this.teacher.scale.x = -(this.teacher.scale.x);
+				this.isTeacherLeft = false;
+			}
 			this.teacher.body.velocity.x = this.movementSpeed;
 		}
 
@@ -194,7 +214,12 @@ var GameView = {
 
 			if(this.assignmentToShoot && this.assignmentsUsed != this.limit){
 				this.assignmentToShoot.reset(this.teacher.x, this.teacher.y);
-				this.assignmentToShoot.body.velocity.x = -this.shootingVelocity;
+				if(this.isTeacherLeft === true){
+					this.assignmentToShoot.body.velocity.x = -this.shootingVelocity;
+				}
+				else{
+					this.assignmentToShoot.body.velocity.x = this.shootingVelocity;
+				}
 				this.assignmentToShoot.scale.setTo(0.05);
 				this.assignmentToShoot.anchor.setTo(0.5,1);
 				this.assignmentToShoot.body.allowGravity = false;
@@ -211,7 +236,12 @@ var GameView = {
 
 			if(this.homeworkToShoot && this.homeworksUsed != this.limit){
 				this.homeworkToShoot.reset(this.student.x, this.student.y);
-				this.homeworkToShoot.body.velocity.x = this.shootingVelocity;
+				if(this.isStudentRight === false){
+					this.homeworkToShoot.body.velocity.x = -this.shootingVelocity;
+				}
+				else{
+					this.homeworkToShoot.body.velocity.x = this.shootingVelocity;
+				}
 				this.homeworkToShoot.scale.setTo(0.05);
 				this.homeworkToShoot.anchor.setTo(0.5,1);
 				this.homeworkToShoot.body.allowGravity = false;
@@ -255,3 +285,4 @@ var WinsLevel = {
 game.state.add('GameView', GameView);
 game.state.add('WinsLevel', WinsLevel);
 game.state.start('GameView');
+	
